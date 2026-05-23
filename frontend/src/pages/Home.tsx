@@ -32,7 +32,7 @@ export function Home() {
         <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">
           Convert PDF to DjVu
         </h1>
-        <p className="text-slate-600 dark:text-slate-300 max-w-2xl">
+        <p className="text-slate-600 dark:text-slate-300">
           Upload a PDF, pick a quality preset, and get a DjVu file that's typically{" "}
           <span className="font-semibold">5–10× smaller</span> than the original — perfect for
           scanned books and archival documents. OCR keeps your text searchable.

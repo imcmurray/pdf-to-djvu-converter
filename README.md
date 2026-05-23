@@ -38,78 +38,91 @@ A modern, full-stack web application that converts PDF files to the DjVu format,
 
 ## 🚀 Quick start
 
-### Option A — Docker Compose (recommended)
-
-```bash
-git clone https://github.com/<you>/pdf-to-djvu-converter.git
-cd pdf-to-djvu-converter
-docker compose up --build
-```
-
-The canonical compose file is **`compose.yaml`** and ships with safe defaults — no `.env`
-required. Copy `.env.example` to `.env` only if you want to override defaults.
-
-Then open:
-
-- **App + Swagger docs** → http://localhost:5173 (the frontend proxies `/api/*` to the backend, so Swagger lives at http://localhost:5173/api/docs)
-- **Direct backend access** (optional) → http://localhost:8000
-
-### Option A2 — Deploy via [Dockge](https://github.com/louislam/dockge) (pre-built images, no source clone)
-
-The CI pipeline builds and publishes two images to **GitHub Container Registry** on every push to `main` and on every git tag:
+CI publishes two pre-built images to **GitHub Container Registry** on every push to `main` and every git tag:
 
 - `ghcr.io/imcmurray/pdf-to-djvu-converter-backend:latest`
 - `ghcr.io/imcmurray/pdf-to-djvu-converter-frontend:latest`
 
-For Dockge (or any compose host), you don't need to clone the repo:
+Both are public — no GitHub token needed to pull. The fastest paths use these images directly.
+
+### Option A — Docker Compose (recommended, no source clone)
+
+Save just the [`compose.yaml`](./compose.yaml) somewhere and run:
+
+```bash
+curl -O https://raw.githubusercontent.com/imcmurray/pdf-to-djvu-converter/main/compose.yaml
+docker compose up -d
+```
+
+`docker compose` pulls both images from GHCR and starts them. The `compose.yaml` has safe inline defaults so it runs with **no `.env` file**.
+
+Then open:
+
+- **App + Swagger docs** → http://localhost:5173 — the nginx in the frontend image proxies `/api/*` to the backend, so Swagger lives at http://localhost:5173/api/docs
+- **Direct backend access** (optional) → http://localhost:8000
+
+### Option B — Deploy via [Dockge](https://github.com/louislam/dockge)
+
+Identical setup, GUI-driven:
 
 1. In Dockge, **Compose → Create new stack**, name it `pdf2djvu`.
-2. **Paste the contents of `compose.yaml`** (linked above) into the editor.
-3. (Optional) Add overrides in the **Environment** tab — every var has a sensible default:
+2. **Paste the contents of [`compose.yaml`](./compose.yaml)** into the editor.
+3. (Optional) Add overrides in the **Environment** tab — every var below is `${VAR:-default}` in the compose, so the stack runs without any of them set:
 
    | Var | Default | What it does |
    |---|---|---|
-   | `IMAGE_TAG` | `latest` | Pin to a specific release, e.g. `v0.2.0` |
-   | `PULL_POLICY` | `missing` | Set to `always` to force-refresh on every restart |
-   | `FRONTEND_PORT` / `BACKEND_PORT` | `5173` / `8000` | Override exposed ports |
+   | `IMAGE_TAG` | `latest` | Pin to a specific release, e.g. `v0.2.0` or `sha-a1aaeed` |
+   | `PULL_POLICY` | `missing` | Set to `always` to refresh on every restart |
+   | `FRONTEND_PORT` / `BACKEND_PORT` | `5173` / `8000` | Override published host ports |
    | `OCR_ENGINE` | `auto` | `tesseract` / `easyocr` to force an engine |
    | `OCR_LANGUAGE` | `eng` | Tesseract code(s), e.g. `eng+deu` |
    | `MAX_UPLOAD_MB` | `100` | Upload size cap |
-   | `STORAGE_TTL_SECONDS` | `3600` | Share-link lifetime |
+   | `STORAGE_TTL_SECONDS` | `3600` | Share-link TTL |
+   | `RATE_LIMIT_CONVERT` / `RATE_LIMIT_COMPARE` | `30/hour` / `60/hour` | Per-IP rate limits |
 4. Click **Deploy**.
 
-Dockge will `docker compose pull` both images and start them — no local build, no source tree on the host. The DjVu output volume is named `pdf2djvu-storage` and survives redeploys.
+Dockge runs `docker compose pull` then `up -d` — no source on the host, no compile step. The DjVu output volume is `pdf2djvu-storage` and persists across redeploys.
 
-> **Force a rebuild instead of pulling** — useful for development or if you've forked the repo:
-> `docker compose up --build` (the same `compose.yaml` has `build:` blocks pointing at `./backend` and `./frontend`).
+### Option C — Build the Docker images yourself
 
-### Option B — Run locally without Docker
+For development, forks, or air-gapped hosts:
 
-You'll need the conversion CLI tools installed:
-
-**Debian/Ubuntu**
 ```bash
-sudo apt-get install -y pdf2djvu djvulibre-bin ocrmypdf ghostscript imagemagick tesseract-ocr
+git clone https://github.com/imcmurray/pdf-to-djvu-converter.git
+cd pdf-to-djvu-converter
+docker compose up --build       # builds both images from ./backend and ./frontend
 ```
 
-**macOS (Homebrew)**
+`compose.yaml` has both `image:` (GHCR) and `build:` (local context) — `--build` rebuilds locally and tags with the same image name, so subsequent `docker compose up` uses your local build until the next `docker compose pull`.
+
+### Option D — Run locally without Docker
+
+There's a one-shot setup script that handles OS detection, system CLIs, Python venv, and npm:
+
 ```bash
-brew install pdf2djvu djvulibre ocrmypdf ghostscript imagemagick tesseract
+git clone https://github.com/imcmurray/pdf-to-djvu-converter.git
+cd pdf-to-djvu-converter
+./scripts/dev.sh setup          # installs CLIs (pacman/apt/brew), venv, npm deps,
+                                # auto-detects NVIDIA GPU → installs EasyOCR+CUDA torch
+./scripts/dev.sh up             # backend (:8000) + frontend (:5173) with combined logs
 ```
 
-**Backend**
-```bash
-cd backend
-python -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
-uvicorn app.main:app --reload --port 8000
-```
+Other subcommands: `setup-gpu` (manual GPU install), `check` (verify CLIs + engine status), `test` (backend pytest), `clean` (nuke venv + node_modules).
 
-**Frontend**
+Manual setup if you'd rather not run the script — install the conversion CLIs:
+
+| OS | Command |
+|---|---|
+| Debian/Ubuntu | `sudo apt install pdf2djvu djvulibre-bin poppler-utils ocrmypdf ghostscript imagemagick tesseract-ocr tesseract-ocr-eng libmagic1` |
+| Arch | `sudo pacman -S djvulibre tesseract tesseract-data-eng ghostscript imagemagick poppler && yay -S pdf2djvu ocrmypdf` |
+| macOS | `brew install pdf2djvu djvulibre ocrmypdf ghostscript imagemagick tesseract poppler libmagic` |
+
+Then:
+
 ```bash
-cd frontend
-npm install
-npm run dev
+cd backend && python -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt && uvicorn app.main:app --reload --port 8000
+# in another terminal:
+cd frontend && npm install && npm run dev
 ```
 
 ---
