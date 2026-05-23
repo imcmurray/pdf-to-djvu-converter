@@ -14,6 +14,8 @@ export interface StepProgress {
   message: string;
   current?: number;
   total?: number;
+  codec?: string;   // on `encode` events: "cjb2" or "c44"
+  engine?: string;  // on `ocr` events: "tesseract" or "easyocr"
 }
 
 export interface ConvertState {
@@ -61,6 +63,8 @@ export function useConvert() {
       message: event.message ?? event.stage,
       current: event.current,
       total: event.total,
+      codec: event.codec,
+      engine: event.engine,
     };
     setState((s) => ({
       ...s,

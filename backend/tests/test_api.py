@@ -19,7 +19,11 @@ from app.security import safe_filename
 
 @pytest.fixture
 def client() -> TestClient:
-    return TestClient(app)
+    # Using TestClient as a context manager triggers the FastAPI `lifespan`
+    # which initialises app.state.share_store. Without this, /api/download
+    # raises AttributeError on app.state access.
+    with TestClient(app) as c:
+        yield c
 
 
 def test_health(client: TestClient) -> None:
@@ -55,10 +59,15 @@ def test_convert_rejects_empty(client: TestClient) -> None:
 
 
 def test_safe_filename() -> None:
-    assert safe_filename("../../etc/passwd") == "etc_passwd"
-    assert safe_filename("../weird name (1).pdf") == "weird_name_1_.pdf"
+    # Path components are stripped (basename-style) before sanitisation.
+    assert safe_filename("../../etc/passwd") == "passwd"
+    assert safe_filename("/etc/shadow") == "shadow"
+    # Spaces and punctuation collapse to underscores.
+    assert safe_filename("weird name (1).pdf") == "weird_name_1_.pdf"
+    # Falls back to default for empty / dotted-only names.
     assert safe_filename("") == "document.pdf"
     assert safe_filename(".") == "document.pdf"
+    assert safe_filename("..") == "document.pdf"
 
 
 def test_compare_rejects_non_pdf(client: TestClient) -> None:

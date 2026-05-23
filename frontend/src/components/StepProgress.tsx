@@ -47,7 +47,7 @@ export function StepProgress({ step, history }: Props) {
           </span>
           {step?.codec && (
             <span className="rounded bg-slate-200 px-1.5 py-0.5 text-[10px] font-mono uppercase tracking-wide text-slate-700 dark:bg-slate-800 dark:text-slate-300">
-              {(step as Step & { codec?: string }).codec}
+              {step.codec}
             </span>
           )}
         </div>
