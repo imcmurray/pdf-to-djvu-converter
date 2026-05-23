@@ -54,21 +54,34 @@ Then open:
 - **App + Swagger docs** → http://localhost:5173 (the frontend proxies `/api/*` to the backend, so Swagger lives at http://localhost:5173/api/docs)
 - **Direct backend access** (optional) → http://localhost:8000
 
-### Option A2 — Deploy via [Dockge](https://github.com/louislam/dockge)
+### Option A2 — Deploy via [Dockge](https://github.com/louislam/dockge) (pre-built images, no source clone)
 
-This stack is Dockge-ready out of the box:
+The CI pipeline builds and publishes two images to **GitHub Container Registry** on every push to `main` and on every git tag:
+
+- `ghcr.io/imcmurray/pdf-to-djvu-converter-backend:latest`
+- `ghcr.io/imcmurray/pdf-to-djvu-converter-frontend:latest`
+
+For Dockge (or any compose host), you don't need to clone the repo:
 
 1. In Dockge, **Compose → Create new stack**, name it `pdf2djvu`.
-2. Paste the contents of `compose.yaml` into the editor (or `git clone` directly into your
-   Dockge stacks directory — e.g. `/opt/stacks/pdf2djvu/`).
-3. (Optional) Add any overrides in the **Environment** tab — every variable is exposed via
-   `${VAR:-default}`, so the stack runs with no env edits.
+2. **Paste the contents of `compose.yaml`** (linked above) into the editor.
+3. (Optional) Add overrides in the **Environment** tab — every var has a sensible default:
+
+   | Var | Default | What it does |
+   |---|---|---|
+   | `IMAGE_TAG` | `latest` | Pin to a specific release, e.g. `v0.2.0` |
+   | `PULL_POLICY` | `missing` | Set to `always` to force-refresh on every restart |
+   | `FRONTEND_PORT` / `BACKEND_PORT` | `5173` / `8000` | Override exposed ports |
+   | `OCR_ENGINE` | `auto` | `tesseract` / `easyocr` to force an engine |
+   | `OCR_LANGUAGE` | `eng` | Tesseract code(s), e.g. `eng+deu` |
+   | `MAX_UPLOAD_MB` | `100` | Upload size cap |
+   | `STORAGE_TTL_SECONDS` | `3600` | Share-link lifetime |
 4. Click **Deploy**.
 
-Default published ports are `5173` (frontend) and `8000` (backend); override with
-`FRONTEND_PORT` / `BACKEND_PORT` env vars if those are taken on your host.
+Dockge will `docker compose pull` both images and start them — no local build, no source tree on the host. The DjVu output volume is named `pdf2djvu-storage` and survives redeploys.
 
-The DjVu output volume is named `pdf2djvu-storage` and persists across redeploys.
+> **Force a rebuild instead of pulling** — useful for development or if you've forked the repo:
+> `docker compose up --build` (the same `compose.yaml` has `build:` blocks pointing at `./backend` and `./frontend`).
 
 ### Option B — Run locally without Docker
 

@@ -1,14 +1,22 @@
 # Canonical compose file. Dockge looks for `compose.yaml` first.
-# All settings default to safe values so the stack runs without an external .env file —
-# but every value can still be overridden via the Dockge environment editor or a .env file.
+#
+# Default behaviour: `docker compose up` pulls pre-built images from GHCR
+# (no source-tree clone needed — set IMAGE_TAG to pin a version).
+# Local dev: `docker compose up --build` re-uses the same `image:` names but
+# builds from the local source tree.
+#
+# All env vars have safe defaults so the stack runs without a `.env` file.
 
 services:
   backend:
+    image: ghcr.io/imcmurray/pdf-to-djvu-converter-backend:${IMAGE_TAG:-latest}
+    # `build:` is only consulted when you pass `--build` (or the image isn't
+    # cached locally and pull fails). Keeps dev / prod paths identical.
     build:
       context: ./backend
       dockerfile: Dockerfile
-    image: pdf2djvu-backend:latest
     container_name: pdf2djvu-backend
+    pull_policy: ${PULL_POLICY:-missing}
     environment:
       MAX_UPLOAD_MB: ${MAX_UPLOAD_MB:-100}
       CONVERSION_TIMEOUT: ${CONVERSION_TIMEOUT:-600}
@@ -35,13 +43,14 @@ services:
       - "dockge.role=backend"
 
   frontend:
+    image: ghcr.io/imcmurray/pdf-to-djvu-converter-frontend:${IMAGE_TAG:-latest}
     build:
       context: ./frontend
       dockerfile: Dockerfile
       args:
         VITE_API_BASE: ${VITE_API_BASE:-}
-    image: pdf2djvu-frontend:latest
     container_name: pdf2djvu-frontend
+    pull_policy: ${PULL_POLICY:-missing}
     depends_on:
       backend:
         condition: service_started
