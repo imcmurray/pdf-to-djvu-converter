@@ -2,6 +2,7 @@
 
 A modern, full-stack web application that converts PDF files to the DjVu format, with side-by-side comparison, OCR support, quality presets, batch processing, dark mode, and shareable links.
 
+[![CI](https://github.com/imcmurray/pdf-to-djvu-converter/actions/workflows/ci.yml/badge.svg)](https://github.com/imcmurray/pdf-to-djvu-converter/actions/workflows/ci.yml)
 ![Stack](https://img.shields.io/badge/stack-FastAPI%20%2B%20React%20%2B%20TS%20%2B%20Tailwind-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
