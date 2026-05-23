@@ -17,6 +17,10 @@ build/
 .eslintcache
 *.tsbuildinfo
 
+# tsc composite build artifacts for vite.config.ts (tsconfig.node.json has composite:true)
+frontend/vite.config.d.ts
+frontend/vite.config.js
+
 # Local env / secrets
 .env
 .env.local

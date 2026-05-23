@@ -51,8 +51,8 @@ required. Copy `.env.example` to `.env` only if you want to override defaults.
 
 Then open:
 
-- **Frontend** → http://localhost:5173
-- **Backend / Swagger docs** → http://localhost:8000/api/docs
+- **App + Swagger docs** → http://localhost:5173 (the frontend proxies `/api/*` to the backend, so Swagger lives at http://localhost:5173/api/docs)
+- **Direct backend access** (optional) → http://localhost:8000
 
 ### Option A2 — Deploy via [Dockge](https://github.com/louislam/dockge)
 
@@ -103,7 +103,7 @@ npm run dev
 
 ## 🔌 API
 
-Once running, full interactive docs are available at **`/api/docs`** (Swagger) and **`/api/redoc`**.
+Once running, full interactive docs are available at **`/api/docs`** (Swagger) and **`/api/redoc`** on whichever host/port serves the app (e.g. http://localhost:5173/api/docs in the default dev/Docker setup).
 
 ### `POST /api/convert`
 

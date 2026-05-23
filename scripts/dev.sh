@@ -345,7 +345,7 @@ run_backend() {
   # shellcheck source=/dev/null
   source "$VENV_DIR/bin/activate"
   cd "$BACKEND_DIR"
-  log "Starting FastAPI on http://localhost:8000  (docs: /docs)"
+  log "Starting FastAPI on http://localhost:8000  (docs: /api/docs)"
   exec uvicorn app.main:app --reload --port 8000 --host 0.0.0.0
 }
 
@@ -377,8 +377,8 @@ run_both() {
   ( "$0" frontend 2>&1 | sed -u "s/^/$(printf '%sfrontend%s ' "$C_GRN" "$C_OFF")/" ) &
   pids+=($!)
 
-  log "Backend → http://localhost:8000/api/docs"
-  log "Frontend → http://localhost:5173"
+  log "Frontend → http://localhost:5173      (Swagger via proxy: /api/docs)"
+  log "Backend  → http://localhost:8000      (direct access; also serves /api/docs)"
   log "Press Ctrl-C to stop both."
   wait
 }
