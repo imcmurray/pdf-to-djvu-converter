@@ -1,0 +1,57 @@
+# Canonical compose file. Dockge looks for `compose.yaml` first.
+# All settings default to safe values so the stack runs without an external .env file —
+# but every value can still be overridden via the Dockge environment editor or a .env file.
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: pdf2djvu-backend:latest
+    container_name: pdf2djvu-backend
+    environment:
+      MAX_UPLOAD_MB: ${MAX_UPLOAD_MB:-100}
+      CONVERSION_TIMEOUT: ${CONVERSION_TIMEOUT:-600}
+      STORAGE_DIR: ${STORAGE_DIR:-/tmp/pdf2djvu}
+      STORAGE_TTL_SECONDS: ${STORAGE_TTL_SECONDS:-3600}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-*}
+      RATE_LIMIT_CONVERT: ${RATE_LIMIT_CONVERT:-30/hour}
+      RATE_LIMIT_COMPARE: ${RATE_LIMIT_COMPARE:-60/hour}
+      OCR_LANGUAGE: ${OCR_LANGUAGE:-eng}
+      OCR_ENGINE: ${OCR_ENGINE:-auto}
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    volumes:
+      - pdf2djvu-storage:/tmp/pdf2djvu
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    labels:
+      - "dockge.app=pdf2djvu"
+      - "dockge.role=backend"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE: ${VITE_API_BASE:-}
+    image: pdf2djvu-frontend:latest
+    container_name: pdf2djvu-frontend
+    depends_on:
+      backend:
+        condition: service_started
+    ports:
+      - "${FRONTEND_PORT:-5173}:80"
+    restart: unless-stopped
+    labels:
+      - "dockge.app=pdf2djvu"
+      - "dockge.role=frontend"
+
+volumes:
+  pdf2djvu-storage:
+    name: pdf2djvu-storage

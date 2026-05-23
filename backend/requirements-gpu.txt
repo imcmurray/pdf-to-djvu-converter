@@ -1,0 +1,11 @@
+# Optional GPU OCR support: PyTorch with CUDA + EasyOCR.
+#
+# Do NOT pip-install this file directly — torch's CUDA wheels live on a
+# dedicated index. scripts/dev.sh setup-gpu installs them in the right order:
+#
+#   pip install --index-url https://download.pytorch.org/whl/cu121 torch
+#   pip install -r requirements-gpu.txt
+#
+# torch is intentionally not listed here so we don't accidentally pick up the
+# CPU-only wheel from PyPI.
+easyocr>=1.7

@@ -1,0 +1,14 @@
+# Pin lower bounds; allow newer wheels so this installs cleanly on Python 3.13–3.14.
+# (Pydantic 2.10+ is the first release with PyO3 0.23 and prebuilt Py3.14 wheels.)
+fastapi>=0.115,<1.0
+uvicorn[standard]>=0.32,<1.0
+python-multipart>=0.0.12
+pydantic>=2.10,<3
+pydantic-settings>=2.7,<3
+slowapi>=0.1.9
+python-magic>=0.4.27
+aiofiles>=24.1.0
+pillow>=10.4.0
+httpx>=0.27.2
+pytest>=8.3.3
+pytest-asyncio>=0.24.0
