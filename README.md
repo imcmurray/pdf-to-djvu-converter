@@ -71,7 +71,7 @@ Identical setup, GUI-driven:
 
    | Var | Default | What it does |
    |---|---|---|
-   | `IMAGE_TAG` | `latest` | Pin to a specific release, e.g. `v0.2.0` or `sha-a1aaeed` |
+   | `IMAGE_TAG` | `latest` | Pin to a release (e.g. `0.1.0` — note no `v` prefix; or `0.1` for the minor track), or a commit (`sha-a1aaeed`) |
    | `PULL_POLICY` | `missing` | Set to `always` to refresh on every restart |
    | `FRONTEND_PORT` / `BACKEND_PORT` | `5173` / `8000` | Override published host ports |
    | `OCR_ENGINE` | `auto` | `tesseract` / `easyocr` to force an engine |
